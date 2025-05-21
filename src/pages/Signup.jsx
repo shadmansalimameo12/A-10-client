@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase.config';
 import { toast } from 'react-toastify';
+import { FaUser, FaEnvelope, FaLock, FaImage, FaGoogle, FaUserPlus } from 'react-icons/fa';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -11,88 +12,127 @@ const Signup = () => {
     photoURL: '',
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
+  const validatePassword = (password) => { // [cite: 15]
+    if (password.length < 6) return 'Password must be at least 6 characters long.';
+    if (!/[A-Z]/.test(password)) return 'Password must contain an uppercase letter.';
+    if (!/[a-z]/.test(password)) return 'Password must contain a lowercase letter.';
+    return null; 
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     const { name, email, photoURL, password } = formData;
-    if (!/^(?=.*[A-Z])(?=.*[a-z]).{6,}$/.test(password)) {
-      toast.error('Password must have an uppercase, lowercase, and be at least 6 characters.');
+    
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      toast.error(passwordError);
+      setIsLoading(false);
       return;
     }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name, photoURL });
-      toast.success('Signed up successfully!');
-      navigate('/');
+      toast.success('Account created successfully!');
+      navigate(from, { replace: true });
     } catch (error) {
-      console.error('Email signup error:', error.code, error.message); // Debug: Log error details
-      toast.error(`Signup failed: ${error.message}`);
+      console.error('Email signup error:', error);
+      toast.error(error.message.replace('Firebase: ', '').replace(/\(auth.*?\)\.?/, '').trim() || 'Signup failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
+    setIsLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Google signup user:', result.user); // Debug: Log user object
-      toast.success('Signed up with Google!');
-      navigate('/');
+      await signInWithPopup(auth, googleProvider);
+      toast.success('Signed up with Google successfully!');
+      navigate(from, { replace: true });
     } catch (error) {
-      console.error('Google signup error:', error.code, error.message); // Debug: Log error details
-      toast.error(`Google signup failed: ${error.message}`);
+      console.error('Google signup error:', error);
+      toast.error(error.message.replace('Firebase: ', '').replace(/\(auth.*?\)\.?/, '').trim() || 'Google signup failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen dark:bg-gray-900 dark:text-white p-4 flex items-center justify-center">
-      <div className="max-w-md w-full border p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Signup</h2>
-        <form onSubmit={handleSignup}>
-          <input
-            type="text"
-            placeholder="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="url"
-            placeholder="Photo URL"
-            value={formData.photoURL}
-            onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <button type="submit" className="w-full p-2 bg-blue-600 text-white rounded">
-            Signup
+    <div className="min-h-screen bg-gradient-to-br from-secondary to-primary flex items-center justify-center p-4">
+      <div className="card w-full max-w-lg bg-base-100 shadow-2xl transform transition-all hover:scale-105">
+        <div className="card-body">
+          <h2 className="card-title text-3xl font-bold text-center mb-6 text-gray-800">
+            Join TaskMarket Today!
+          </h2>
+          <form onSubmit={handleSignup} className="space-y-4">
+            {[
+              { name: 'name', type: 'text', placeholder: 'Full Name', icon: <FaUser /> },
+              { name: 'email', type: 'email', placeholder: 'Email Address', icon: <FaEnvelope /> },
+              { name: 'photoURL', type: 'url', placeholder: 'Photo URL (optional)', icon: <FaImage /> },
+              { name: 'password', type: 'password', placeholder: 'Create Password', icon: <FaLock /> },
+            ].map(field => (
+              <div className="form-control" key={field.name}>
+                <label className="label">
+                  <span className="label-text text-gray-700">{field.placeholder}</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">{field.icon}</span>
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    placeholder={field.placeholder}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    className="input input-bordered w-full pl-10 focus:border-primary focus:ring-primary"
+                    required={field.name !== 'photoURL'}
+                    disabled={isLoading}
+                  />
+                </div>
+                {field.name === 'password' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Min 6 chars, 1 uppercase, 1 lowercase.
+                  </p>
+                )}
+              </div>
+            ))}
+            <button 
+              type="submit" 
+              className="btn btn-primary w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? <span className="loading loading-spinner"></span> : <FaUserPlus />}
+              Create Account
+            </button>
+          </form>
+
+          <div className="divider my-6 text-gray-500">OR</div>
+
+          <button
+            onClick={handleGoogleSignup}
+            className="btn btn-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white w-full"
+            disabled={isLoading}
+          >
+             {isLoading ? <span className="loading loading-spinner"></span> : <FaGoogle />}
+            Sign up with Google
           </button>
-        </form>
-        <button
-          onClick={handleGoogleSignup}
-          className="w-full p-2 mt-4 bg-red-600 text-white rounded"
-        >
-          Signup with Google
-        </button>
-        <p className="mt-4">
-          Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
-        </p>
+
+          <p className="text-center mt-6 text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="link link-primary font-semibold hover:underline">
+              Log In
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

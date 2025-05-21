@@ -1,57 +1,45 @@
-// ==========================================
-// TaskCard Component - Display a single task in a card format
-// ==========================================
 import { Link } from 'react-router-dom';
 import { Reveal } from 'react-awesome-reveal';
-import { FaInfoCircle, FaCalendarAlt, FaTag, FaDollarSign } from 'react-icons/fa';
+import { FaInfoCircle, FaCalendarAlt, FaTags, FaDollarSign } from 'react-icons/fa';
 
-/**
- * TaskCard Component
- * @param {Object} props - Component props
- * @param {Object} props.task - Task data object containing title, category, deadline, budget, and _id
- */
 const TaskCard = ({ task }) => {
-  // Format the date nicely
   const formattedDate = new Date(task.deadline).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   });
 
   return (
     <Reveal>
-      <div className="card border hover:border-primary transition-colors bg-base-100 dark:bg-gray-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
-        <div className="card-body">
-          {/* Card Header */}
-          <h3 className="card-title text-lg font-semibold text-primary-focus mb-2">
+      <div className="card bg-base-100 dark:bg-gray-800 shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 border border-transparent hover:border-primary">
+        <div className="card-body p-5">
+          <h3 className="card-title text-xl font-semibold text-gray-800 dark:text-white mb-3 truncate" title={task.title}>
             {task.title}
           </h3>
-          
-          {/* Card Content */}
-          <div className="space-y-2 mb-4">
-            <div className="flex items-center text-sm">
-              <FaTag className="mr-2 text-gray-500" />
-              <span>Category: <span className="font-medium">{task.category}</span></span>
+
+          <div className="space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex items-center">
+              <FaTags className="mr-2 text-primary" />
+              Category: <span className="font-medium ml-1">{task.category}</span>
             </div>
-            
-            <div className="flex items-center text-sm">
-              <FaCalendarAlt className="mr-2 text-gray-500" />
-              <span>Deadline: <span className="font-medium">{formattedDate}</span></span>
+            <div className="flex items-center">
+              <FaCalendarAlt className="mr-2 text-primary" />
+              Deadline: <span className="font-medium ml-1">{formattedDate}</span>
             </div>
-            
-            <div className="flex items-center text-sm">
-              <FaDollarSign className="mr-2 text-gray-500" />
-              <span>Budget: <span className="font-medium">${task.budget}</span></span>
+            <div className="flex items-center">
+              <FaDollarSign className="mr-2 text-primary" />
+              Budget: <span className="font-medium ml-1">${task.budget}</span>
             </div>
           </div>
-          
-          {/* Card Footer - Action Button */}
-          <Link 
-            to={`/task/${task._id}`} 
-            className="btn btn-sm btn-primary w-full hover:bg-primary-focus transition-colors"
-          >
-            <FaInfoCircle className="mr-1" /> See Details
-          </Link>
+
+          <div className="card-actions justify-end">
+            <Link
+              to={`/task/${task._id}`}
+              className="btn btn-sm btn-primary hover:bg-primary-focus transition-colors w-full md:w-auto"
+            >
+              <FaInfoCircle className="mr-1" /> See Details
+            </Link>
+          </div>
         </div>
       </div>
     </Reveal>

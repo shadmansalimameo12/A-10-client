@@ -1,185 +1,117 @@
-/**
- * MyPostedTasks Component
- * 
- * Shows all tasks posted by the current user.
- * Provides functionality to update, delete, and view bids on tasks.
- */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { auth } from '../firebase.config';
-
-// Import icons
-import { 
-  FaEdit,     // Edit icon
-  FaTrash,    // Delete icon
-  FaGavel,    // Bids icon
-  FaTasks     // Tasks icon
-} from 'react-icons/fa';
+import { FaEdit, FaTrash, FaGavel, FaTasks, FaPlus } from 'react-icons/fa';
 
 const MyPostedTasks = () => {
-  // ===== STATE MANAGEMENT =====
-  const [tasks, setTasks] = useState([]);       // Store user's tasks
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const currentUser = auth.currentUser;
 
-  // ===== DATA FETCHING =====
-  // Fetch user's posted tasks when component mounts
   useEffect(() => {
-    // Only fetch if user is logged in
-    if (auth.currentUser) {
+    if (currentUser) {
       const fetchUserTasks = async () => {
         try {
-          // Get API URL from environment variables
           const apiUrl = import.meta.env.VITE_API_URL;
-          
-          // Fetch tasks filtered by current user's email
-          const response = await axios.get(
-            `${apiUrl}/tasks?userEmail=${auth.currentUser.email}`
-          );
-          
-          // Update state with fetched tasks
+          const response = await axios.get(`${apiUrl}/tasks?userEmail=${currentUser.email}`); // [cite: 30]
           setTasks(response.data);
-          
-          // Turn off loading state
-          setLoading(false);
         } catch (error) {
-          // Handle errors
           console.error('Error fetching user tasks:', error);
+          toast.error('Failed to load your tasks.');
+        } finally {
           setLoading(false);
-          toast.error('Failed to load your tasks');
         }
       };
-      
-      // Call the fetch function
       fetchUserTasks();
     } else {
-      // Handle case when user is not logged in
       setLoading(false);
+      toast.info("Please log in to see your posted tasks.");
     }
-  }, []); // Empty dependency array means this runs once on mount
+  }, [currentUser]);
 
-  // ===== EVENT HANDLERS =====
-  /**
-   * Handle task deletion
-   * @param {string} id - Task ID to delete
-   */
-  const handleDelete = async (id) => {
-    // Ask for confirmation before deleting
-    if (window.confirm('Are you sure you want to delete this task?')) {
+  const handleDelete = async (taskId) => { // [cite: 38]
+    if (window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
       try {
-        // Get API URL from environment variables
         const apiUrl = import.meta.env.VITE_API_URL;
-        
-        // Send delete request to API
-        await axios.delete(`${apiUrl}/tasks/${id}`);
-        
-        // Update local state by filtering out deleted task
-        setTasks(tasks.filter((task) => task._id !== id));
-        
-        // Show success message
+        await axios.delete(`${apiUrl}/tasks/${taskId}`);
+        setTasks(currentTasks => currentTasks.filter(task => task._id !== taskId));
         toast.success('Task deleted successfully!');
       } catch (error) {
-        // Handle errors
         console.error('Error deleting task:', error);
-        toast.error('Failed to delete task!');
+        toast.error('Failed to delete task.');
       }
     }
   };
 
-  // ===== HELPER FUNCTIONS =====
-  /**
-   * Format date to locale string
-   * @param {string} dateString - Date string to format
-   * @returns {string} Formatted date
-   */
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // ===== COMPONENT RENDERING =====
-  return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 p-4">
-      <div className="container mx-auto">
-        {/* Page Header */}
-        <h2 className="text-2xl font-bold mb-4 flex items-center">
-          <FaTasks className="mr-2 text-primary" /> My Posted Tasks
-        </h2>
-        
-        {/* Conditional rendering based on loading state */}
-        {loading ? (
-          // Show loading spinner
-          <div className="flex justify-center items-center py-12">
-            <div className="loader animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
-            <span className="ml-2 text-lg">Loading tasks...</span>
-          </div>
-        ) : (
-          // Show tasks in table format
-          <div className="card bg-base-100 dark:bg-gray-800 shadow-xl">
-            <div className="card-body">
-              <div className="overflow-x-auto">
-                {tasks.length > 0 ? (
-                  <table className="table table-zebra w-full">
-                    {/* Table Header */}
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Deadline</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    
-                    {/* Table Body */}
-                    <tbody>
-                      {tasks.map((task) => (
-                        <tr key={task._id}>
-                          <td>{task.title}</td>
-                          <td>{task.category}</td>
-                          <td>{formatDate(task.deadline)}</td>
-                          <td className="space-x-2">
-                            {/* Update Button */}
-                            <Link 
-                              to={`/update-task/${task._id}`} 
-                              className="btn btn-sm btn-primary"
-                            >
-                              <FaEdit className="mr-1" /> Update
-                            </Link>
-                            
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => handleDelete(task._id)}
-                              className="btn btn-sm btn-error"
-                            >
-                              <FaTrash className="mr-1" /> Delete
-                            </button>
-                            
-                            {/* View Bids Button */}
-                            <Link 
-                              to={`/task/${task._id}`} 
-                              className="btn btn-sm btn-success"
-                            >
-                              <FaGavel className="mr-1" /> Bids
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  // Message when no tasks are found
-                  <div className="text-center py-8">
-                    <p className="text-lg mb-4">You haven't posted any tasks yet</p>
-                    <Link to="/add-task" className="btn btn-primary">
-                      Create Your First Task
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+  if (loading) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[60vh]">
+        <span className="loading loading-lg loading-spinner text-primary mb-4"></span>
+        <p className="text-xl text-gray-600 dark:text-gray-300">Loading your tasks...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="bg-base-200 dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl shadow-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center">
+          <FaTasks className="mr-3 text-primary" /> My Posted Tasks
+        </h2>
+        <Link to="/add-task" className="btn btn-primary btn-sm mt-4 sm:mt-0">
+          <FaPlus className="mr-1" /> Add New Task
+        </Link>
+      </div>
+
+      {tasks.length > 0 ? (
+        <div className="overflow-x-auto bg-base-100 dark:bg-gray-800 rounded-lg shadow-md">
+          <table className="table w-full"> {/* [cite: 31] */}
+            <thead className="bg-base-300 dark:bg-gray-700">
+              <tr>
+                <th className="p-4 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Task Title</th>
+                <th className="p-4 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Category</th>
+                <th className="p-4 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Deadline</th>
+                <th className="p-4 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Budget</th>
+                <th className="p-4 text-center text-xs font-medium text-gray-600 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {tasks.map((task) => ( // [cite: 31]
+                <tr key={task._id} className="hover:bg-base-200 dark:hover:bg-gray-700 transition-colors">
+                  <td className="p-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{task.title}</td>
+                  <td className="p-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{task.category}</td>
+                  <td className="p-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{formatDate(task.deadline)}</td>
+                  <td className="p-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">${task.budget}</td>
+                  <td className="p-4 whitespace-nowrap text-sm font-medium space-x-2 text-center">
+                    <Link to={`/update-task/${task._id}`} className="btn btn-xs btn-outline btn-info hover:text-white">
+                      <FaEdit /> Update
+                    </Link>
+                    <button onClick={() => handleDelete(task._id)} className="btn btn-xs btn-outline btn-error hover:text-white">
+                      <FaTrash /> Delete
+                    </button>
+                    <Link to={`/task/${task._id}`} className="btn btn-xs btn-outline btn-success hover:text-white">
+                      <FaGavel /> Bids
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-base-100 dark:bg-gray-800 rounded-lg shadow-md">
+          <FaTasks className="text-6xl text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <p className="text-xl text-gray-600 dark:text-gray-400">You haven't posted any tasks yet.</p>
+          <p className="text-gray-500 dark:text-gray-500">Let's get started!</p>
+          <Link to="/add-task" className="btn btn-primary mt-6">
+            <FaPlus className="mr-2" /> Post Your First Task
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

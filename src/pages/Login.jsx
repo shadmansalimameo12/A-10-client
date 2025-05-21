@@ -1,153 +1,114 @@
-/**
- * Login Component
- * 
- * Handles user authentication via email/password or Google sign-in.
- * Provides form validation and redirects on successful login.
- */
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
-// Import Firebase authentication methods
-import { 
-  signInWithEmailAndPassword, 
-  signInWithPopup 
-} from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase.config';
-
-// Import icons
-import { 
-  FaEnvelope, 
-  FaLock, 
-  FaGoogle 
-} from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaGoogle, FaSignInAlt } from 'react-icons/fa';
 
 const Login = () => {
-  // ===== STATE MANAGEMENT =====
-  const [email, setEmail] = useState('');       // Store email input
-  const [password, setPassword] = useState(''); // Store password input
-  const navigate = useNavigate();               // For navigation after login
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
-  // ===== EVENT HANDLERS =====
-  /**
-   * Handle standard email/password login
-   * @param {Event} e - Form submit event
-   */
   const handleLogin = async (e) => {
-    e.preventDefault(); // Prevent default form submission
-    
+    e.preventDefault();
+    setIsLoading(true);
     try {
-      // Attempt to sign in with email and password
       await signInWithEmailAndPassword(auth, email, password);
-      
-      // Show success message
       toast.success('Logged in successfully!');
-      
-      // Redirect to home page
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (error) {
-      // Log error for debugging
-      console.error('Email login error:', error.code, error.message);
-      
-      // Show error message to user
-      toast.error(`Login failed: ${error.message}`);
+      console.error('Email login error:', error);
+      toast.error(error.message.replace('Firebase: ', '').replace(/\(auth.*?\)\.?/, '').trim() || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  /**
-   * Handle Google authentication login
-   */
   const handleGoogleLogin = async () => {
+    setIsLoading(true);
     try {
-      // Attempt to sign in with Google
-      const result = await signInWithPopup(auth, googleProvider);
-      
-      // Log user info for debugging
-      console.log('Google login user:', result.user);
-      
-      // Show success message
-      toast.success('Logged in with Google!');
-      
-      // Redirect to home page
-      navigate('/');
+      await signInWithPopup(auth, googleProvider);
+      toast.success('Logged in with Google successfully!');
+      navigate(from, { replace: true });
     } catch (error) {
-      // Log error for debugging
-      console.error('Google login error:', error.code, error.message);
-      
-      // Show error message to user
-      toast.error(`Google login failed: ${error.message}`);
+      console.error('Google login error:', error);
+      toast.error(error.message.replace('Firebase: ', '').replace(/\(auth.*?\)\.?/, '').trim() || 'Google login failed.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // ===== COMPONENT RENDERING =====
   return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 flex items-center justify-center p-4">
-      {/* Login Card */}
-      <div className="card w-full max-w-md bg-base-100 dark:bg-gray-800 shadow-xl">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-secondary flex items-center justify-center p-4">
+      <div className="card w-full max-w-md bg-base-100 shadow-2xl transform transition-all hover:scale-105">
         <div className="card-body">
-          <h2 className="card-title text-2xl">Login to TaskMarket</h2>
-          
-          {/* Email/Password Login Form */}
-          <form onSubmit={handleLogin} className="form-control">
-            {/* Email Input */}
-            <div className="form-control mb-4">
+          <h2 className="card-title text-3xl font-bold text-center mb-6 text-gray-800">
+            Welcome Back!
+          </h2>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="form-control">
               <label className="label">
-                <span className="label-text">Email</span>
+                <span className="label-text text-gray-700">Email Address</span>
               </label>
-              <div className="input-group">
-                <span className="input input-bordered">
-                  <FaEnvelope />
-                </span>
+              <div className="relative">
+                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="your.email@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full pl-10 focus:border-primary focus:ring-primary"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
-            
-            {/* Password Input */}
-            <div className="form-control mb-4">
+            <div className="form-control">
               <label className="label">
-                <span className="label-text">Password</span>
+                <span className="label-text text-gray-700">Password</span>
               </label>
-              <div className="input-group">
-                <span className="input input-bordered">
-                  <FaLock />
-                </span>
+              <div className="relative">
+                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full pl-10 focus:border-primary focus:ring-primary"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
-            
-            {/* Submit Button */}
-            <button type="submit" className="btn btn-primary w-full">
-              <FaEnvelope className="mr-1" /> Login
+            <button 
+              type="submit" 
+              className="btn btn-primary w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? <span className="loading loading-spinner"></span> : <FaSignInAlt />}
+              Login
             </button>
           </form>
           
-          {/* Google Login Button */}
-          <button 
-            onClick={handleGoogleLogin} 
-            className="btn btn-error w-full mt-4"
+          <div className="divider my-6 text-gray-500">OR</div>
+          
+          <button
+            onClick={handleGoogleLogin}
+            className="btn btn-outline border-red-500 text-red-500 hover:bg-red-500 hover:text-white w-full"
+            disabled={isLoading}
           >
-            <FaGoogle className="mr-1" /> Login with Google
+            {isLoading ? <span className="loading loading-spinner"></span> : <FaGoogle />}
+            Continue with Google
           </button>
           
-          {/* Signup Link */}
-          <p className="text-center mt-4">
-            Don't have an account?{' '}
-            <Link to="/signup" className="link link-primary link-hover">
-              Signup
+          <p className="text-center mt-6 text-sm text-gray-600">
+            New to TaskMarket?{' '}
+            <Link to="/signup" className="link link-primary font-semibold hover:underline">
+              Create an account
             </Link>
           </p>
         </div>

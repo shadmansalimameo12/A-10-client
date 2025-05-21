@@ -17,6 +17,5 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-// Add scopes for Google Auth to ensure email and profile data are accessible
 googleProvider.addScope('email');
 googleProvider.addScope('profile');

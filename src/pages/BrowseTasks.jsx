@@ -1,76 +1,57 @@
-/**
- * BrowseTasks Component
- * 
- * Displays all available tasks in a responsive grid layout.
- * Fetches task data from the API and handles loading states.
- */
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import TaskCard from '../components/TaskCard';
+import { FaSearchDollar } from 'react-icons/fa';
 
 const BrowseTasks = () => {
-  // ===== STATE MANAGEMENT =====
-  const [tasks, setTasks] = useState([]);       // Store all tasks
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ===== DATA FETCHING =====
-  // Fetch all tasks when component mounts
   useEffect(() => {
-    // Define the fetch function
     const fetchTasks = async () => {
       try {
-        // Get API URL from environment variables
         const apiUrl = import.meta.env.VITE_API_URL;
-        
-        // Fetch tasks from API
         const response = await axios.get(`${apiUrl}/tasks`);
-        
-        // Update state with fetched tasks
         setTasks(response.data);
-        
-        // Turn off loading state
-        setLoading(false);
       } catch (error) {
-        // Handle errors
         console.error('Error fetching tasks:', error);
+        toast.error("Failed to load tasks. Please try refreshing the page.");
+      } finally {
         setLoading(false);
       }
     };
-    
-    // Call the fetch function
     fetchTasks();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // ===== COMPONENT RENDERING =====
-  return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 p-4">
-      <div className="container mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Browse Tasks</h2>
-        
-        {/* Conditional rendering based on loading state */}
-        {loading ? (
-          // Show loading message while fetching data
-          <div className="text-center p-8">
-            <div className="loader animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary mx-auto mb-4"></div>
-            <div className="text-lg">Loading tasks...</div>
-          </div>
-        ) : (
-          // Show task grid once data is loaded
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Map through tasks array to create task cards */}
-            {tasks.length > 0 ? (
-              tasks.map((task) => (
-                <TaskCard key={task._id} task={task} />
-              ))
-            ) : (
-              // Show message if no tasks are available
-              <div className="col-span-3 text-center p-8">
-                <p className="text-lg">No tasks available at the moment.</p>
-              </div>
-            )}
-          </div>
-        )}
+  if (loading) { // [cite: 39]
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[60vh]">
+        <span className="loading loading-lg loading-spinner text-primary mb-4"></span>
+        <p className="text-xl text-gray-600 dark:text-gray-300">Fetching available tasks...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="bg-base-200 dark:bg-gray-900 p-4 sm:p-6 md:p-8 rounded-xl shadow-lg">
+      <h2 className="text-3xl font-bold mb-8 text-center text-gray-800 dark:text-white flex items-center justify-center">
+        <FaSearchDollar className="mr-3 text-primary" /> Browse All Available Tasks
+      </h2>
+      
+      {tasks.length > 0 ? ( // [cite: 22]
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tasks.map((task) => (
+            <TaskCard key={task._id} task={task} /> // [cite: 23]
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <FaTasks className="text-6xl text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <p className="text-xl text-gray-600 dark:text-gray-400">No tasks found at the moment.</p>
+          <p className="text-gray-500 dark:text-gray-500">Why not be the first to post one?</p>
+          <Link to="/add-task" className="btn btn-primary mt-6">Post a New Task</Link>
+        </div>
+      )}
     </div>
   );
 };
