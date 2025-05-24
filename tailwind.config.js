@@ -7,6 +7,6 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [require('daisyui')],
-  darkMode: 'class',
-};
+  plugins: [],
+  darkMode: 'class', // Dark mode class-based hobe
+}

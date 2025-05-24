@@ -1,23 +1,15 @@
-// ==========================================
-// AddTask Component - Form to create new tasks
-// ==========================================
-import { useState } from 'react';
+// Add Task page with responsive form
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase.config';
-import { 
-  FaTasks, 
-  FaListAlt, 
-  FaAlignLeft, 
-  FaCalendarAlt, 
-  FaDollarSign, 
-  FaEnvelope, 
-  FaUser 
-} from 'react-icons/fa';
+import { FaTasks, FaListAlt, FaAlignLeft, FaCalendarAlt, FaDollarSign, FaEnvelope, FaUser } from 'react-icons/fa';
 
 const AddTask = () => {
-  // ========== STATE MANAGEMENT ==========
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -25,210 +17,154 @@ const AddTask = () => {
     deadline: '',
     budget: '',
   });
-  
-  const navigate = useNavigate();
-  const user = auth.currentUser;
 
-  // ========== EVENT HANDLERS ==========
-  
-  // Handle form field changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
+  // User check korsi
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
     });
+    return () => unsubscribe();
+  }, []);
+
+  // Form data change handle korsi
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle form submission
+  // Form submit korsi
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
-      // Create task data with user info
-      const taskData = {
+      await axios.post('https://server-ten-virid-49.vercel.app/api/tasks', {
         ...formData,
         userEmail: user.email,
         userName: user.displayName,
-      };
-      
-      // Send POST request to create task
-      await axios.post(`${import.meta.env.VITE_API_URL}/tasks`, taskData);
-      
-      // Show success message
-      toast.success('Task added successfully!');
-      
-      // Redirect to my posted tasks page
+      });
+      toast.success('Task add hoye gese!');
       navigate('/my-posted-tasks');
     } catch (error) {
-      toast.error('Failed to add task!');
-      console.error('Error adding task:', error);
+      toast.error('Task add korte problem holo!');
     }
   };
 
-  // ========== RENDERING ==========
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 p-4">
-      <div className="container mx-auto">
-        {/* Form Card */}
-        <div className="card w-full max-w-lg mx-auto bg-base-100 dark:bg-gray-800 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title text-2xl mb-6 text-center">Add New Task</h2>
-            
-            <form onSubmit={handleSubmit} className="form-control">
-              {/* Task Title */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Task Title</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaTasks className="text-primary" />
-                  </span>
-                  <input
-                    type="text"
-                    name="title"
-                    placeholder="Enter task title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              {/* Category */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Category</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaListAlt className="text-primary" />
-                  </span>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="select select-bordered w-full focus:ring-2 focus:ring-primary"
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    <option value="Web Development">Web Development</option>
-                    <option value="Design">Design</option>
-                    <option value="Writing">Writing</option>
-                    <option value="Marketing">Marketing</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Description */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Description</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaAlignLeft className="text-primary" />
-                  </span>
-                  <textarea
-                    name="description"
-                    placeholder="Enter task description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="textarea textarea-bordered w-full h-32 focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              {/* Deadline */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Deadline</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaCalendarAlt className="text-primary" />
-                  </span>
-                  <input
-                    type="date"
-                    name="deadline"
-                    value={formData.deadline}
-                    onChange={handleChange}
-                    className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              {/* Budget */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Budget</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaDollarSign className="text-primary" />
-                  </span>
-                  <input
-                    type="number"
-                    name="budget"
-                    placeholder="Enter budget"
-                    value={formData.budget}
-                    onChange={handleChange}
-                    className="input input-bordered w-full focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-              </div>
-              
-              {/* User Email (Read-only) */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Your Email</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaEnvelope className="text-primary" />
-                  </span>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    readOnly
-                    className="input input-bordered w-full bg-base-200 dark:bg-gray-600"
-                  />
-                </div>
-              </div>
-              
-              {/* User Name (Read-only) */}
-              <div className="form-control mb-4">
-                <label className="label">
-                  <span className="label-text font-medium">Your Name</span>
-                </label>
-                <div className="input-group">
-                  <span className="input input-bordered flex items-center justify-center w-12">
-                    <FaUser className="text-primary" />
-                  </span>
-                  <input
-                    type="text"
-                    value={user?.displayName || ''}
-                    readOnly
-                    className="input input-bordered w-full bg-base-200 dark:bg-gray-600"
-                  />
-                </div>
-              </div>
-              
-              {/* Submit Button */}
-              <button 
-                type="submit" 
-                className="btn btn-primary w-full hover:bg-primary-focus transition-colors"
-              >
-                <FaTasks className="mr-2" /> Add Task
-              </button>
-            </form>
+    <div className="p-4">
+      <div className="container mx-auto max-w-full sm:max-w-lg">
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-200">Add New Task</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Task Title</label>
+            <div className="flex items-center">
+              <FaTasks className="mr-2 text-gray-900 dark:text-gray-200" />
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Enter task title"
+                className="border p-2 w-full rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                required
+              />
+            </div>
           </div>
-        </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Category</label>
+            <div className="flex items-center">
+              <FaListAlt className="mr-2 text-gray-900 dark:text-gray-200" />
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="border p-2 w-full rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                required
+              >
+                <option value="">Select Category</option>
+                <option value="Web Development">Web Development</option>
+                <option value="Design">Design</option>
+                <option value="Writing">Writing</option>
+                <option value="Marketing">Marketing</option>
+              </select>
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Description</label>
+            <div className="flex items-center">
+              <FaAlignLeft className="mr-2 text-gray-900 dark:text-gray-200" />
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Enter task description"
+                className="border p-2 w-full rounded h-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Deadline</label>
+            <div className="flex items-center">
+              <FaCalendarAlt className="mr-2 text-gray-900 dark:text-gray-200" />
+              <input
+                type="date"
+                name="deadline"
+                value={formData.deadline}
+                onChange={handleChange}
+                className="border p-2 w-full rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Budget</label>
+            <div className="flex items-center">
+              <FaDollarSign className="mr-2 text-gray-900 dark:text-gray-200" />
+              <input
+                type="number"
+                name="budget"
+                value={formData.budget}
+                onChange={handleChange}
+                placeholder="Enter budget"
+                className="border p-2 w-full rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Your Email</label>
+            <div className="flex items-center">
+              <FaEnvelope className="mr-2 text-gray-900 dark:text-gray-200" />
+              <input
+                type="email"
+                value={user?.email || ''}
+                readOnly
+                className="border p-2 w-full rounded bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-gray-200"
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 text-gray-900 dark:text-gray-200">Your Name</label>
+            <div className="flex items-center">
+              <FaUser className="mr-2 text-gray-900 dark:text-gray-200" />
+              <input
+                type="text"
+                value={user?.displayName || ''}
+                readOnly
+                className="border p-2 w-full rounded bg-gray-200 dark:bg-gray-600 text-gray-900 dark:text-gray-200"
+              />
+            </div>
+          </div>
+          <button type="submit" className="bg-blue-500 dark:bg-blue-600 text-white p-2 rounded w-full">
+            <FaTasks className="inline mr-1" /> Add Task
+          </button>
+        </form>
       </div>
     </div>
   );

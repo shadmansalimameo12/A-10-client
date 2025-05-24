@@ -1,8 +1,10 @@
+// Signup page
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase.config';
 import { toast } from 'react-toastify';
+import { FaUser, FaEnvelope, FaLink, FaLock, FaGoogle } from 'react-icons/fa';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -13,85 +15,113 @@ const Signup = () => {
   });
   const navigate = useNavigate();
 
+  // Form input handle korsi
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Email signup handle korsi
   const handleSignup = async (e) => {
     e.preventDefault();
-    const { name, email, photoURL, password } = formData;
-    if (!/^(?=.*[A-Z])(?=.*[a-z]).{6,}$/.test(password)) {
-      toast.error('Password must have an uppercase, lowercase, and be at least 6 characters.');
+    if (!/^(?=.*[A-Z])(?=.*[a-z]).{6,}$/.test(formData.password)) {
+      toast.error('Password e uppercase, lowercase, and 6+ chars lagbe!');
       return;
     }
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name, photoURL });
-      toast.success('Signed up successfully!');
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      await updateProfile(userCredential.user, { displayName: formData.name, photoURL: formData.photoURL });
+      toast.success('Signup hoye gese!');
       navigate('/');
     } catch (error) {
-      console.error('Email signup error:', error.code, error.message); // Debug: Log error details
-      toast.error(`Signup failed: ${error.message}`);
+      toast.error('Signup korte problem holo!');
     }
   };
 
+  // Google signup handle korsi
   const handleGoogleSignup = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      console.log('Google signup user:', result.user); // Debug: Log user object
-      toast.success('Signed up with Google!');
+      await signInWithPopup(auth, googleProvider);
+      toast.success('Google diye signup hoye gese!');
       navigate('/');
     } catch (error) {
-      console.error('Google signup error:', error.code, error.message); // Debug: Log error details
-      toast.error(`Google signup failed: ${error.message}`);
+      toast.error('Google signup korte problem holo!');
     }
   };
 
   return (
-    <div className="min-h-screen dark:bg-gray-900 dark:text-white p-4 flex items-center justify-center">
-      <div className="max-w-md w-full border p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Signup</h2>
+    <div className="p-4 flex justify-center items-center min-h-screen">
+      <div className="bg-white p-4 rounded shadow max-w-md w-full">
+        <h2 className="text-2xl font-bold mb-4 text-center">Signup</h2>
         <form onSubmit={handleSignup}>
-          <input
-            type="text"
-            placeholder="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="url"
-            placeholder="Photo URL"
-            value={formData.photoURL}
-            onChange={(e) => setFormData({ ...formData, photoURL: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full p-2 mb-4 border rounded dark:bg-gray-700"
-            required
-          />
-          <button type="submit" className="w-full p-2 bg-blue-600 text-white rounded">
+          <div className="mb-4">
+            <label className="block mb-1">Name</label>
+            <div className="flex items-center">
+              <FaUser className="mr-2" />
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Enter your name"
+                className="border p-2 w-full rounded"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Email</label>
+            <div className="flex items-center">
+              <FaEnvelope className="mr-2" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                className="border p-2 w-full rounded"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Photo URL</label>
+            <div className="flex items-center">
+              <FaLink className="mr-2" />
+              <input
+                type="url"
+                name="photoURL"
+                value={formData.photoURL}
+                onChange={handleChange}
+                placeholder="Enter your photo URL"
+                className="border p-2 w-full rounded"
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Password</label>
+            <div className="flex items-center">
+              <FaLock className="mr-2" />
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                className="border p-2 w-full rounded"
+                required
+              />
+            </div>
+          </div>
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded w-full">
             Signup
           </button>
         </form>
-        <button
-          onClick={handleGoogleSignup}
-          className="w-full p-2 mt-4 bg-red-600 text-white rounded"
-        >
-          Signup with Google
+        <button onClick={handleGoogleSignup} className="bg-red-500 text-white p-2 rounded w-full mt-2">
+          <FaGoogle className="inline mr-1" /> Signup with Google
         </button>
-        <p className="mt-4">
-          Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
+        <p className="text-center mt-2">
+          Already have an account? <Link to="/login" className="text-blue-500">Login</Link>
         </p>
       </div>
     </div>

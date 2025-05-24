@@ -1,33 +1,16 @@
-/**
- * NotFound Component
- * 
- * Displays a friendly 404 error page when users navigate to non-existent routes.
- * Includes a warning icon and a message explaining the error.
- */
+// 404 Not Found page
 import { Link } from 'react-router-dom';
 import { FaExclamationTriangle, FaHome } from 'react-icons/fa';
 
 const NotFound = () => {
   return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 flex items-center justify-center p-4">
-      {/* Error Card */}
-      <div className="bg-base-100 dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md w-full text-center">
-        {/* Warning Icon */}
-        <FaExclamationTriangle className="text-6xl text-error mx-auto mb-6" />
-        
-        {/* Error Message */}
-        <h2 className="text-4xl font-bold mb-4">
-          404 - Page Not Found
-        </h2>
-        
-        {/* Explanation */}
-        <p className="text-lg mb-8">
-          The page you are looking for does not exist or has been moved.
-        </p>
-        
-        {/* Return Home Button */}
-        <Link to="/" className="btn btn-primary">
-          <FaHome className="mr-2" /> Return to Home
+    <div className="p-4 flex justify-center items-center min-h-screen">
+      <div className="bg-white p-4 rounded shadow text-center">
+        <FaExclamationTriangle className="text-4xl text-red-500 mx-auto mb-2" />
+        <h2 className="text-2xl font-bold mb-2">404 - Page Not Found</h2>
+        <p className="mb-4">Page ta khuje pai nai!</p>
+        <Link to="/" className="bg-blue-500 text-white p-2 rounded">
+          <FaHome className="inline mr-1" /> Go Home
         </Link>
       </div>
     </div>

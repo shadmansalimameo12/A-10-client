@@ -1,296 +1,209 @@
-/**
- * Navbar Component
- * 
- * Main navigation bar for the TaskMarket application
- * Displays different options based on user authentication status
- * Shows user profile picture for logged-in users
- */
-
+// Navbar component with theme toggle, logout, ar hover effect
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase.config';
 import { toast } from 'react-toastify';
-import { FaUserCircle, FaBars, FaSignOutAlt, FaTasks, FaPlus } from 'react-icons/fa';
+import { FaUserCircle, FaBars, FaSignOutAlt, FaTasks, FaPlus, FaSun, FaMoon } from 'react-icons/fa';
 
 const Navbar = () => {
-  // ========== STATE MANAGEMENT ==========
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // Theme local storage theke nebo, default light
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const navigate = useNavigate();
 
-  // ========== AUTHENTICATION LISTENER ==========
+  // User login check and theme apply korsi
   useEffect(() => {
-    // Set up Firebase auth state listener
+    // User check korsi
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      // User change hole menu close korsi
+      setIsMenuOpen(false);
     });
-    
-    // Clean up listener on component unmount
+    // Theme apply korsi HTML root e
+    document.documentElement.className = theme;
+    localStorage.setItem('theme', theme);
     return () => unsubscribe();
-  }, []);
+  }, [theme]);
 
-  // ========== EVENT HANDLERS ==========
+  // Logout handle korsi
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      toast.success('Logged out successfully!');
+      toast.success('Logout hoye gese!');
       navigate('/login');
     } catch (error) {
-      toast.error('Logout failed!');
-      console.error('Logout error:', error);
+      toast.error('Logout korte problem holo!');
     }
-  };
-
-  // Close mobile menu when clicking a link
-  const handleMenuItemClick = () => {
     setIsMenuOpen(false);
   };
 
-  // ========== RENDERING ==========
+  // Theme toggle ar menu close ek sathe korsi
+  const toggleThemeAndCloseMenu = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    setIsMenuOpen(false);
+  };
+
+  // Menu toggle korsi
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* ===== LOGO ===== */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-800 transition-colors duration-300">
-              TaskMarket
-            </Link>
-          </div>
-
-          {/* ===== DESKTOP MENU ===== */}
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-4">
-              <Link 
-                to="/" 
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-all duration-200"
-              >
-                Home
+    <nav className="bg-white dark:bg-gray-800 p-4 shadow relative z-50">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold text-blue-500 dark:text-blue-400">
+          TaskMarket
+        </Link>
+        <div className="hidden md:flex space-x-4">
+          <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
+            Home
+          </Link>
+          <Link to="/browse-tasks" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
+            Browse Tasks
+          </Link>
+          {user && (
+            <>
+              <Link to="/add-task" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
+                <FaPlus className="inline mr-1" /> Add Task
               </Link>
-              <Link 
-                to="/browse-tasks" 
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-all duration-200"
-              >
-                Browse Tasks
+              <Link to="/my-posted-tasks" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
+                <FaTasks className="inline mr-1" /> My Tasks
               </Link>
-              
-              {/* Conditional menu items for logged-in users */}
-              {user && (
-                <>
-                  <Link 
-                    to="/add-task" 
-                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-all duration-200"
-                  >
-                    <span className="flex items-center">
-                      <FaPlus className="mr-1" /> Add Task
+            </>
+          )}
+          <button onClick={toggleThemeAndCloseMenu} className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
+            {theme === 'light' ? <FaMoon className="inline mr-1" /> : <FaSun className="inline mr-1" />}
+            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+          </button>
+        </div>
+        <div className="flex items-center">
+          {user ? (
+            <div className="relative">
+              <button onClick={toggleMenu} className="flex items-center relative group">
+                {user.photoURL ? (
+                  <>
+                    <img src={user.photoURL} alt="Profile" className="h-8 w-8 rounded-full" />
+                    {/* Hover e displayName show korbo */}
+                    <span className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-sm rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50">
+                      {user.displayName || 'User'}
                     </span>
-                  </Link>
-                  <Link 
-                    to="/my-posted-tasks" 
-                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600 transition-all duration-200"
+                  </>
+                ) : (
+                  <FaUserCircle className="h-8 w-8 text-gray-700 dark:text-gray-200" />
+                )}
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 shadow-lg rounded z-50">
+                  <div className="p-2 border-b">
+                    <p className="text-gray-900 dark:text-gray-200 font-medium">{user.displayName || 'User'}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    <span className="flex items-center">
-                      <FaTasks className="mr-1" /> My Posted Tasks
-                    </span>
+                    Profile
                   </Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* ===== USER ACTIONS ===== */}
-          <div className="flex items-center">
-            {user ? (
-              // Logged-in user dropdown
-              <div className="relative ml-3">
-                <div>
-                  <button 
-                    className="flex items-center max-w-xs rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
-                    id="user-menu"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  <button
+                    onClick={handleLogout}
+                    className="block p-2 text-red-600 dark:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left"
                   >
-                    <span className="sr-only">Open user menu</span>
-                    {/* Show user profile picture if available, otherwise show placeholder icon */}
-                    {user.photoURL ? (
-                      <img 
-                        className="h-8 w-8 rounded-full object-cover border-2 border-blue-500"
-                        src={user.photoURL} 
-                        alt="User profile"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                        <FaUserCircle className="text-xl" />
-                      </div>
-                    )}
+                    <FaSignOutAlt className="inline mr-1" /> Sign out
                   </button>
                 </div>
-                
-                {/* User dropdown menu */}
-                {isMenuOpen && (
-                  <div 
-                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="user-menu"
-                  >
-                    <div className="px-4 py-2 border-b">
-                      <p className="text-sm font-medium text-gray-900">{user.displayName || 'User'}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                    </div>
-                    <Link 
-                      to="/profile" 
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={handleMenuItemClick}
-                    >
-                      Your Profile
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                    >
-                      <span className="flex items-center">
-                        <FaSignOutAlt className="mr-2" /> Sign out
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Login/Signup buttons for guests
-              <div className="flex items-center space-x-2">
-                <Link 
-                  to="/login" 
-                  className="px-3 py-1 border border-blue-500 text-blue-500 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors duration-200"
-                >
-                  Login
-                </Link>
-                <Link 
-                  to="/signup" 
-                  className="px-3 py-1 bg-blue-500 text-white rounded-md text-sm font-medium hover:bg-blue-600 transition-colors duration-200"
-                >
-                  Signup
-                </Link>
-              </div>
-            )}
-
-            {/* ===== MOBILE MENU BUTTON ===== */}
-            <div className="ml-4 flex md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                aria-expanded="false"
-              >
-                <span className="sr-only">Open main menu</span>
-                <FaBars className="block h-6 w-6" />
-              </button>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="flex space-x-2">
+              <Link to="/login" className="text-blue-500 dark:text-blue-400 border border-blue-500 dark:border-blue-400 p-1 rounded">
+                Login
+              </Link>
+              <Link to="/signup" className="bg-blue-500 dark:bg-blue-600 text-white p-1 rounded">
+                Signup
+              </Link>
+            </div>
+          )}
+          <button onClick={toggleMenu} className="md:hidden ml-2 text-gray-700 dark:text-gray-200">
+            <FaBars />
+          </button>
         </div>
       </div>
-
-      {/* ===== MOBILE MENU ===== */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white shadow-lg rounded-b-lg">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link 
-              to="/" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-              onClick={handleMenuItemClick}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/browse-tasks" 
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-              onClick={handleMenuItemClick}
-            >
-              Browse Tasks
-            </Link>
-            
-            {/* Conditional menu items for mobile */}
-            {user ? (
-              <>
-                <Link 
-                  to="/add-task" 
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                  onClick={handleMenuItemClick}
-                >
-                  <span className="flex items-center">
-                    <FaPlus className="mr-2" /> Add Task
-                  </span>
-                </Link>
-                <Link 
-                  to="/my-posted-tasks" 
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                  onClick={handleMenuItemClick}
-                >
-                  <span className="flex items-center">
-                    <FaTasks className="mr-2" /> My Posted Tasks
-                  </span>
-                </Link>
-                
-                {/* User info in mobile menu */}
-                <div className="border-t border-gray-200 pt-4 pb-3">
-                  <div className="flex items-center px-4">
-                    {user.photoURL ? (
-                      <div className="flex-shrink-0">
-                        <img 
-                          className="h-10 w-10 rounded-full object-cover border-2 border-blue-500"
-                          src={user.photoURL} 
-                          alt="User profile"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                        <FaUserCircle className="text-xl" />
-                      </div>
-                    )}
-                    <div className="ml-3">
-                      <div className="text-base font-medium text-gray-800">{user.displayName || 'User'}</div>
-                      <div className="text-sm font-medium text-gray-500">{user.email}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 px-2 space-y-1">
-                    <Link 
-                      to="/profile" 
-                      className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-blue-600"
-                      onClick={handleMenuItemClick}
-                    >
-                      Your Profile
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-100"
-                    >
-                      <span className="flex items-center">
-                        <FaSignOutAlt className="mr-2" /> Sign out
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="border-t border-gray-200 pt-4 pb-3 px-4 flex flex-col space-y-2">
-                <Link 
-                  to="/login" 
-                  className="w-full px-3 py-2 text-center border border-blue-500 text-blue-500 rounded-md font-medium hover:bg-blue-50"
-                  onClick={handleMenuItemClick}
-                >
-                  Login
-                </Link>
-                <Link 
-                  to="/signup" 
-                  className="w-full px-3 py-2 text-center bg-blue-500 text-white rounded-md font-medium hover:bg-blue-600"
-                  onClick={handleMenuItemClick}
-                >
-                  Signup
-                </Link>
-              </div>
-            )}
-          </div>
+        <div className="md:hidden bg-white dark:bg-gray-800 p-2">
+          <Link
+            to="/"
+            className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
+          <Link
+            to="/browse-tasks"
+            className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Browse Tasks
+          </Link>
+          {user && (
+            <>
+              <Link
+                to="/add-task"
+                className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaPlus className="inline mr-1" /> Add Task
+              </Link>
+              <Link
+                to="/my-posted-tasks"
+                className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <FaTasks className="inline mr-1" /> My Tasks
+              </Link>
+              <Link
+                to="/profile"
+                className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Profile
+              </Link>
+              <button
+                onClick={toggleThemeAndCloseMenu}
+                className="block p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 w-full text-left"
+              >
+                {theme === 'light' ? <FaMoon className="inline mr-1" /> : <FaSun className="inline mr-1" />}
+                {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="block p-2 text-red-600 dark:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+              >
+                <FaSignOutAlt className="inline mr-1" /> Sign out
+              </button>
+            </>
+          )}
+          {!user && (
+            <>
+              <Link
+                to="/login"
+                className="block p-2 text-blue-500 dark:text-blue-400 border border-blue-500 dark:border-blue-400 rounded"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="block p-2 bg-blue-500 dark:bg-blue-600 text-white rounded"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Signup
+              </Link>
+            </>
+          )}
         </div>
       )}
     </nav>

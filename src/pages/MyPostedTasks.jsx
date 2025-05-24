@@ -1,185 +1,101 @@
-/**
- * MyPostedTasks Component
- * 
- * Shows all tasks posted by the current user.
- * Provides functionality to update, delete, and view bids on tasks.
- */
+// User er posted tasks show korbo
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { auth } from '../firebase.config';
-
-// Import icons
-import { 
-  FaEdit,     // Edit icon
-  FaTrash,    // Delete icon
-  FaGavel,    // Bids icon
-  FaTasks     // Tasks icon
-} from 'react-icons/fa';
+import { FaEdit, FaTrash, FaGavel } from 'react-icons/fa';
 
 const MyPostedTasks = () => {
-  // ===== STATE MANAGEMENT =====
-  const [tasks, setTasks] = useState([]);       // Store user's tasks
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ===== DATA FETCHING =====
-  // Fetch user's posted tasks when component mounts
+  // Tasks fetch korsi user er email diye
   useEffect(() => {
-    // Only fetch if user is logged in
     if (auth.currentUser) {
-      const fetchUserTasks = async () => {
+      const fetchTasks = async () => {
         try {
-          // Get API URL from environment variables
-          const apiUrl = import.meta.env.VITE_API_URL;
-          
-          // Fetch tasks filtered by current user's email
           const response = await axios.get(
-            `${apiUrl}/tasks?userEmail=${auth.currentUser.email}`
+            `https://server-ten-virid-49.vercel.app/api/tasks?userEmail=${auth.currentUser.email}`
           );
-          
-          // Update state with fetched tasks
           setTasks(response.data);
-          
-          // Turn off loading state
-          setLoading(false);
         } catch (error) {
-          // Handle errors
-          console.error('Error fetching user tasks:', error);
+          toast.error('Tasks load korte problem holo!');
+        } finally {
           setLoading(false);
-          toast.error('Failed to load your tasks');
         }
       };
-      
-      // Call the fetch function
-      fetchUserTasks();
+      fetchTasks();
     } else {
-      // Handle case when user is not logged in
       setLoading(false);
     }
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // ===== EVENT HANDLERS =====
-  /**
-   * Handle task deletion
-   * @param {string} id - Task ID to delete
-   */
+  // Task delete korar function
   const handleDelete = async (id) => {
-    // Ask for confirmation before deleting
-    if (window.confirm('Are you sure you want to delete this task?')) {
+    if (window.confirm('Task delete korbe?')) {
       try {
-        // Get API URL from environment variables
-        const apiUrl = import.meta.env.VITE_API_URL;
-        
-        // Send delete request to API
-        await axios.delete(`${apiUrl}/tasks/${id}`);
-        
-        // Update local state by filtering out deleted task
+        await axios.delete(`https://server-ten-virid-49.vercel.app/api/tasks/${id}`);
         setTasks(tasks.filter((task) => task._id !== id));
-        
-        // Show success message
-        toast.success('Task deleted successfully!');
+        toast.success('Task delete hoye gese!');
       } catch (error) {
-        // Handle errors
-        console.error('Error deleting task:', error);
-        toast.error('Failed to delete task!');
+        toast.error('Task delete korte problem holo!');
       }
     }
   };
 
-  // ===== HELPER FUNCTIONS =====
-  /**
-   * Format date to locale string
-   * @param {string} dateString - Date string to format
-   * @returns {string} Formatted date
-   */
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString();
+  // Date format korar function
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString();
   };
 
-  // ===== COMPONENT RENDERING =====
   return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 p-4">
-      <div className="container mx-auto">
-        {/* Page Header */}
-        <h2 className="text-2xl font-bold mb-4 flex items-center">
-          <FaTasks className="mr-2 text-primary" /> My Posted Tasks
-        </h2>
-        
-        {/* Conditional rendering based on loading state */}
-        {loading ? (
-          // Show loading spinner
-          <div className="flex justify-center items-center py-12">
-            <div className="loader animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div>
-            <span className="ml-2 text-lg">Loading tasks...</span>
-          </div>
-        ) : (
-          // Show tasks in table format
-          <div className="card bg-base-100 dark:bg-gray-800 shadow-xl">
-            <div className="card-body">
-              <div className="overflow-x-auto">
-                {tasks.length > 0 ? (
-                  <table className="table table-zebra w-full">
-                    {/* Table Header */}
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Deadline</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    
-                    {/* Table Body */}
-                    <tbody>
-                      {tasks.map((task) => (
-                        <tr key={task._id}>
-                          <td>{task.title}</td>
-                          <td>{task.category}</td>
-                          <td>{formatDate(task.deadline)}</td>
-                          <td className="space-x-2">
-                            {/* Update Button */}
-                            <Link 
-                              to={`/update-task/${task._id}`} 
-                              className="btn btn-sm btn-primary"
-                            >
-                              <FaEdit className="mr-1" /> Update
-                            </Link>
-                            
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => handleDelete(task._id)}
-                              className="btn btn-sm btn-error"
-                            >
-                              <FaTrash className="mr-1" /> Delete
-                            </button>
-                            
-                            {/* View Bids Button */}
-                            <Link 
-                              to={`/task/${task._id}`} 
-                              className="btn btn-sm btn-success"
-                            >
-                              <FaGavel className="mr-1" /> Bids
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  // Message when no tasks are found
-                  <div className="text-center py-8">
-                    <p className="text-lg mb-4">You haven't posted any tasks yet</p>
-                    <Link to="/add-task" className="btn btn-primary">
-                      Create Your First Task
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4">My Posted Tasks</h2>
+      {loading ? (
+        <div className="text-center p-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500 mx-auto"></div>
+          <p>Loading...</p>
+        </div>
+      ) : tasks.length > 0 ? (
+        <div className="bg-white p-4 rounded shadow">
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="text-left p-2">Title</th>
+                <th className="text-left p-2">Category</th>
+                <th className="text-left p-2">Deadline</th>
+                <th className="text-left p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map((task) => (
+                <tr key={task._id}>
+                  <td className="p-2">{task.title}</td>
+                  <td className="p-2">{task.category}</td>
+                  <td className="p-2">{formatDate(task.deadline)}</td>
+                  <td className="p-2 flex space-x-2">
+                    <Link to={`/update-task/${task._id}`} className="btn btn-sm bg-blue-500 text-white">
+                      <FaEdit /> Update
                     </Link>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+                    <button onClick={() => handleDelete(task._id)} className="btn btn-sm bg-red-500 text-white">
+                      <FaTrash /> Delete
+                    </button>
+                    <Link to={`/bids/${task._id}`} className="btn btn-sm bg-green-500 text-white">
+                      <FaGavel /> View Bids
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center p-4">
+          <p>No tasks posted yet.</p>
+          <Link to="/add-task" className="btn bg-blue-500 text-white mt-2">Add Task</Link>
+        </div>
+      )}
     </div>
   );
 };

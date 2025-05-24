@@ -1,10 +1,11 @@
+// Firebase setup korsi
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
-// Debug: Log environment variables to ensure they are loaded
+// Environment variables check korsi
 console.log("Firebase API Key:", import.meta.env.VITE_FIREBASE_API_KEY);
-console.log("Firebase Auth Domain:", import.meta.env.VITE_FIREBASE_AUTH_DOMAIN);
 
+// Firebase config object
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,9 +15,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// Firebase app initialize korsi
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-// Add scopes for Google Auth to ensure email and profile data are accessible
+
+// Google auth er jonno scope add korsi
 googleProvider.addScope('email');
 googleProvider.addScope('profile');

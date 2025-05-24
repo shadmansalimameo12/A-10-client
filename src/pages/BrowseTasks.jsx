@@ -1,75 +1,75 @@
-/**
- * BrowseTasks Component
- * 
- * Displays all available tasks in a responsive grid layout.
- * Fetches task data from the API and handles loading states.
- */
+// Browse Tasks page with bid count sorting
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import TaskCard from '../components/TaskCard';
+import { toast } from 'react-toastify';
 
 const BrowseTasks = () => {
-  // ===== STATE MANAGEMENT =====
-  const [tasks, setTasks] = useState([]);       // Store all tasks
-  const [loading, setLoading] = useState(true); // Track loading state
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState('deadline'); // Default sort by deadline
+  const navigate = useNavigate();
 
-  // ===== DATA FETCHING =====
-  // Fetch all tasks when component mounts
+  // Tasks fetch korsi with sorting option
   useEffect(() => {
-    // Define the fetch function
     const fetchTasks = async () => {
       try {
-        // Get API URL from environment variables
-        const apiUrl = import.meta.env.VITE_API_URL;
-        
-        // Fetch tasks from API
-        const response = await axios.get(`${apiUrl}/tasks`);
-        
-        // Update state with fetched tasks
+        const response = await axios.get(
+          `https://server-ten-virid-49.vercel.app/api/tasks?sort=${sortBy}`
+        );
         setTasks(response.data);
-        
-        // Turn off loading state
-        setLoading(false);
       } catch (error) {
-        // Handle errors
-        console.error('Error fetching tasks:', error);
+        toast.error('Tasks load korte problem holo!');
+      } finally {
         setLoading(false);
       }
     };
-    
-    // Call the fetch function
     fetchTasks();
-  }, []); // Empty dependency array means this runs once on mount
+  }, [sortBy]);
 
-  // ===== COMPONENT RENDERING =====
+  // Task click korle details page e jabo
+  const handleTaskClick = (taskId) => {
+    navigate(`/task/${taskId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-base-200 dark:bg-gray-900 p-4">
+    <div className="p-4">
       <div className="container mx-auto">
-        <h2 className="text-2xl font-bold mb-4">Browse Tasks</h2>
-        
-        {/* Conditional rendering based on loading state */}
-        {loading ? (
-          // Show loading message while fetching data
-          <div className="text-center p-8">
-            <div className="loader animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary mx-auto mb-4"></div>
-            <div className="text-lg">Loading tasks...</div>
-          </div>
-        ) : (
-          // Show task grid once data is loaded
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Map through tasks array to create task cards */}
-            {tasks.length > 0 ? (
-              tasks.map((task) => (
-                <TaskCard key={task._id} task={task} />
-              ))
-            ) : (
-              // Show message if no tasks are available
-              <div className="col-span-3 text-center p-8">
-                <p className="text-lg">No tasks available at the moment.</p>
-              </div>
-            )}
-          </div>
-        )}
+        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-200">Browse Tasks</h2>
+        <div className="mb-4">
+          <label className="mr-2 text-gray-900 dark:text-gray-200">Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="border p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+          >
+            <option value="deadline">Deadline</option>
+            <option value="bidsCount">Highest Bids</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {tasks.map((task) => (
+            <div
+              key={task._id}
+              className="bg-white dark:bg-gray-800 p-4 rounded shadow cursor-pointer"
+              onClick={() => handleTaskClick(task._id)}
+            >
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-200">{task.title}</h2>
+              <p className="text-gray-900 dark:text-gray-200">Category: {task.category}</p>
+              <p className="text-gray-900 dark:text-gray-200">Budget: ${task.budget}</p>
+              <p className="text-gray-900 dark:text-gray-200">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
+              <p className="text-gray-900 dark:text-gray-200">{task.description.slice(0, 100)}...</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

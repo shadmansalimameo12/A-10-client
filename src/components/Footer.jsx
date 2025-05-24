@@ -1,72 +1,25 @@
-/**
- * Footer Component
- * 
- * Displays at the bottom of every page.
- * Contains contact information, links, and social media icons.
- */
-import { 
-  FaFacebook, 
-  FaTwitter, 
-  FaLinkedin 
-} from 'react-icons/fa';
+// Footer component
+import { FaFacebook, FaTwitter, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
-  // Social media links data
-  const socialLinks = [
-    { 
-      icon: <FaFacebook />, 
-      url: "https://facebook.com",
-      label: "Facebook"
-    },
-    { 
-      icon: <FaTwitter />, 
-      url: "https://twitter.com",
-      label: "Twitter"
-    },
-    { 
-      icon: <FaLinkedin />, 
-      url: "https://linkedin.com",
-      label: "LinkedIn"
-    }
-  ];
-
   return (
-    <footer className="bg-base-200 dark:bg-gray-900 text-base-content p-6 mt-8">
-      <div className="container mx-auto text-center">
-        {/* Contact Email */}
-        <p className="text-sm mb-2">
-          Contact: 
-          <a 
-            href="mailto:support@taskmarket.com" 
-            className="link link-hover ml-1"
-          >
-            support@taskmarket.com
-          </a>
-        </p>
-
-        {/* Terms & Conditions Link */}
-        <p className="text-sm mb-4">
-          <a 
-            href="/terms" 
-            className="link link-primary link-hover"
-          >
-            Terms & Conditions
-          </a>
-        </p>
-
-        {/* Social Media Icons */}
-        <div className="flex justify-center gap-6">
-          {socialLinks.map((social, index) => (
-            <a 
-              key={index}
-              href={social.url} 
-              aria-label={social.label}
-              className="text-2xl hover:text-primary transition-colors"
-            >
-              {social.icon}
-            </a>
-          ))}
-        </div>
+    <footer className="bg-gray-200 p-4 text-center">
+      <p className="mb-2">
+        Contact: <a href="mailto:support@taskmarket.com" className="text-blue-500">support@taskmarket.com</a>
+      </p>
+      <p className="mb-2">
+        <a href="/terms" className="text-blue-500">Terms & Conditions</a>
+      </p>
+      <div className="flex justify-center gap-4">
+        <a href="https://www.facebook.com/taskmarket" className="text-2xl">
+          <FaFacebook />
+        </a>
+        <a href="https://www.twitter.com/taskmarket" className="text-2xl">
+          <FaTwitter />
+        </a>
+        <a href="https://www.linkedin.com/company/taskmarket" className="text-2xl">
+          <FaLinkedin />
+        </a>
       </div>
     </footer>
   );
