@@ -19,7 +19,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+<<<<<<< HEAD
 
 // Google auth er jonno scope add korsi
+=======
+>>>>>>> 5651e19fecfd6b3800ea63cd5969932e4879bf6c
 googleProvider.addScope('email');
 googleProvider.addScope('profile');
